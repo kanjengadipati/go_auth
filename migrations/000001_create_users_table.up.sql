@@ -7,5 +7,7 @@ CREATE TABLE users (
     role_id INTEGER,
     is_verified BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    password_updated_at TIMESTAMP
+    updated_at TIMESTAMP,
+    password_updated_at TIMESTAMP,
+    deleted_at TIMESTAMP
 );
