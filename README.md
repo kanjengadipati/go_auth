@@ -1,40 +1,32 @@
 # Go Auth App
 
-A robust, modular authentication API built with Go and Gin.  
-Features secure user registration, email verification, JWT authentication (with refresh/rotation), logout, password reset, role-based access control (RBAC), profile & admin endpoints, and strong test coverage.  
-Designed for rapid customization, maintainability, and solid testing.
+A production-ready, modular authentication REST API for user and admin management, built in Go using Gin, Gorm, and PostgreSQL.
 
-## 🚀 Features (Grouped by Area)
+**Key Features:**
+- Email-based registration & verification
+- JWT access/refresh with rotation, blacklist, and RBAC
+- Secure password reset via email (SendGrid)
+- Role-based user/admin access
+- API endpoints for profile, listing users (admin)
+- Modular clean project structure with dotenv-based config
+- Ready for local dev or containerized deploy (Docker)
+- Built-in Makefile tasks for DB migration & seeding
+- Mocks and isolated tests for core logic
 
-### User Authentication
-- **Register:** Secure new user registration with immediate email verification flow
-- **Login:** Authenticate users (only after email verified)
-- **JWT Auth:** Issue, validate, and rotate access/refresh tokens for each login
-- **Logout:** Server-side token invalidation (refresh token blacklisting)
+---
 
-### Email Verification & Account Activation
-- **Verification flow:** Sends verification email on register (`/verify-email?token=...`)
-- **Resend Verification:** Endpoint to resend verification email
+## 🚀 Features At a Glance
 
-### Password Management
-- **Forgot Password:** Request a password reset email if forgotten
-- **Reset Password:** Reset password via secure emailed token
-- **Secure password hashing:** All user passwords with bcrypt
-
-### Token Management & Security
-- **Token rotation:** Refresh token invalidation/rotation (prevents reuse after logout/refresh)
-- **Access/Refresh tokens:** Short-lived JWT access, long-lived refresh
-- **Token required for protected endpoints**
-
-### User & Admin Operations
-- **Profile:** Authenticated users can get their own profile details
-- **User listing:** Admins can list/view all users (`/users`), RBAC enforced
-- **Role-based guards:** Simple and extensible role checks (user/admin)
-
-### Architecture & Developer UX
-- **Clean, modular codebase:** Controllers, services, repos, DTOs, middleware
-- **.env file support:** Easy environment config for DB, mail, JWT secrets
-- **Mocks and tests:** Full coverage for core features
+- **Register:** Users sign up, receive verification email
+- **Verify Email:** Activate account via emailed token
+- **Login:** Obtain access & refresh JWTs (only after verification)
+- **Token Rotation:** Each refresh token is single-use, immediately invalid after use
+- **Logout:** Blacklist/invalidate refresh token
+- **Forgot/Reset Password:** Email reset link, reset with verified token
+- **Profile & Admin Listing:** Users see their info; admins can list all users
+- **RBAC:** Endpoints restricted by role (user/admin)
+- **Security:** bcrypt password hashing
+- **Testing:** Extensive mocks, logic isolation
 
 ---
 
@@ -42,8 +34,8 @@ Designed for rapid customization, maintainability, and solid testing.
 
 ### Prerequisites
 
-- Go 1.18 or newer ([get Go](https://golang.org/dl/))
-- Docker (optional, for Postgres database)
+- Go 1.18+ ([download](https://golang.org/dl/))
+- Docker (for Postgres, Redis; optional for development)
 
 ### Installation
 
@@ -51,101 +43,135 @@ Designed for rapid customization, maintainability, and solid testing.
 git clone https://github.com/your-username/go-auth-app.git
 cd go-auth-app
 go mod tidy
-cp .env.example .env   # Edit .env with your DB, JWT, and email config
+cp .env.example .env        # Fill in DB, JWT, email config!
 ```
 
-### Configuration
+Edit `.env`:
+- `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_SSLMODE`
+- `JWT_SECRET`
+- `SENDGRID_API_KEY`, `SENDGRID_EMAIL`
+- `ADMIN_EMAIL`, `ADMIN_PASSWORD`
+- `REDIS_HOST`, `REDIS_PORT`
 
-Key `.env` variables:
-- `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_SSLMODE` — Postgres database connection settings
-- `JWT_SECRET` — secret key for signing JWTs
-- `ADMIN_EMAIL`, `ADMIN_PASSWORD` — initial admin user credentials
-- `SENDGRID_API_KEY` — SendGrid API key for sending emails
-- `SENDGRID_EMAIL` — email address used as sender for outgoing mail
+---
 
-### Running the Server
+### Database & Redis: Migrate & Seed
+
+Prepare Docker (recommended for local dev):
+
+```sh
+docker compose up -d
+```
+
+Or use your own Postgres/Redis setup and update `.env` accordingly.
+
+Use the Makefile for DB tasks:
+
+**Migrate:**
+```sh
+make migrate
+```
+- Auto-creates required tables (User, Token, etc.)
+
+**Seed:**
+```sh
+make seed
+```
+- Seeds initial admin user (see `.env` for `ADMIN_EMAIL`, `ADMIN_PASSWORD`)
+
+**Quick one-step (migrate + seed):**
+```sh
+make db-setup
+```
+- Shortcut: runs both steps above
+
+---
+
+### Launch the Server
 
 ```sh
 go run main.go
 ```
 
-API is available at: [http://localhost:8080](http://localhost:8080)
+Server will listen on: [http://localhost:8080](http://localhost:8080)
+
+You can also deploy using Docker:
+```sh
+docker build -t go-auth-app .
+docker run --env-file .env -p 8080:8080 go-auth-app
+```
 
 ---
 
-## 📚 API Endpoints Grouped by Feature
+## 📚 API Overview
 
-### User Registration & Email Verification
+### Registration & Email Verification
 
-- **POST `/register`** — Register a new user  
-  **Request:**
+- **POST `/register`**
   ```json
   { "name": "Alice", "email": "alice@email.com", "password": "supersecure" }
   ```
-  - On success: User receives a verification email.
+  _Sends verification email—login disabled until activation._
 
-- **GET `/verify-email?token=...`** — Verify user's email  
-  - Link sent in the verification email. Activates account.
+- **GET `/verify-email?token=...`**
+  - Visit the emailed link to activate account
 
-- **POST `/resend`** — Resend verification email  
-  **Request:**
+- **POST `/resend`**
   ```json
   { "email": "alice@email.com" }
   ```
+  _Request a new verification email_
 
 ---
 
-### Authentication & Token Management
+### Auth & Tokens
 
-- **POST `/login`** — Log in (only after email verified)  
-  **Request:**
+- **POST `/login`**
   ```json
   { "email": "alice@email.com", "password": "supersecure" }
   ```
-  **Response:**
+  _Returns:_
   ```json
   { "access_token": "JWT...", "refresh_token": "..." }
   ```
-
-- **POST `/refresh-token`** — Refresh tokens  
-  **Request:**
+- **POST `/refresh-token`**
   ```json
-  { "refresh_token": "existing_refresh_token" }
+  { "refresh_token": "..." }
   ```
-  *Returns new pair, invalidates previous refresh token.*
+  _Returns new tokens; previous refresh token is immediately invalidated._
 
-- **POST `/logout`** — Invalidate issued refresh token  
-  **Headers:** `Authorization: Bearer <access_token>`  
-  **Request:**
+- **POST `/logout`**
+  _Headers:_ `Authorization: Bearer <access_token>`
   ```json
-  { "refresh_token": "the_token_to_invalidate" }
+  { "refresh_token": "..." }
   ```
 
 ---
 
 ### Password Reset
 
-- **POST `/forgot-password`** — Send a password reset email  
-  **Request:**
+- **POST `/forgot-password`**
   ```json
   { "email": "alice@email.com" }
   ```
+  _Sends a password reset email._
 
-- **POST `/reset-password`** — Reset forgotten password  
-  **Request:**
+- **POST `/reset-password`**
   ```json
-  { "token": "<password_reset_token>", "new_password": "yourNewPassword" }
+  { "token": "<reset_token>", "new_password": "yourNewPassword" }
   ```
 
 ---
 
 ### User & Admin
 
-- **GET `/profile`** — Get current logged-in user's profile  
-  - **Requires:** valid access token
+- **GET `/profile`**  
+  _(Authenticated; token required)_  
+  Returns user profile.
 
-- **GET `/users`** — List all users *(admin only)*  
-  - **Requires:** admin's access token (`Authorization: Bearer ...`)
+- **GET `/users`**  
+  _(Admin only; token required)_  
+  Returns list of all users.
 
 ---
 
@@ -154,8 +180,8 @@ API is available at: [http://localhost:8080](http://localhost:8080)
 ```sh
 go test ./tests/...
 ```
-- Extensive coverage for registration, login, token lifecycles, role guards, verification logic, password reset, and more.
-- Uses mocks for services and repositories, isolating business logic.
+- Covers registration, login, token logic, guards, email flow, password reset
+- Uses mocks to isolate business logic
 
 ---
 
@@ -163,25 +189,28 @@ go test ./tests/...
 
 ```
 .
-├── controllers/     # HTTP handlers for API endpoints
-├── dto/            # Request/response objects and validation
-├── models/         # GORM models (User, Token, etc.)
-├── repositories/   # Data interface & logic
-├── services/       # Business logic (auth, user, mail, etc.)
-├── middleware/     # JWT & RBAC middleware
-├── config/         # Environment, DB, mail, JWT settings
-├── tests/          # Unit/mocks for all features
-└── main.go         # Entry point
+├── controllers/     # API route handlers
+├── dto/             # Request/response schemas & validation
+├── models/          # GORM models (User, Token, etc.)
+├── repositories/    # DB access layer
+├── services/        # Business logic & integrations
+├── middleware/      # JWT, role guards, auth
+├── config/          # .env loader, DB, mail, JWT config
+├── tests/           # Unit/integration tests, mocks
+├── main.go          # Entrypoint
+└── dockerfile       # Multi-stage Docker build
 ```
 
 ---
 
 ## 🤝 Contributing
 
-1. Fork this repo
-2. Create a feature branch (`git checkout -b feat/your-feature`)
-3. Commit and push your changes
-4. Open a Pull Request!
+1. Fork this repository
+2. Create feature branch: `git checkout -b feat/my-feature`
+3. Commit & push changes
+4. [Open a Pull Request](https://github.com/your-username/go-auth-app/pulls)
+
+---
 
 ## 📄 License
 

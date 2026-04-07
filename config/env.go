@@ -9,8 +9,9 @@ import (
 
 // LoadEnv loads environment variables from a .env file, if present.
 func LoadEnv() {
-	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found or failed to load .env")
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("No .env file found, using system env")
 	}
 }
 

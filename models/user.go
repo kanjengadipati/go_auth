@@ -14,7 +14,6 @@ type User struct {
 	Password          string `json:"-"`
 	Role              string // user / admin
 	RoleID            uint
-	RefreshToken      string
 	IsVerified        bool
 	PasswordUpdatedAt time.Time
 }

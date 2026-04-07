@@ -68,4 +68,8 @@ func SetupRoutes(router *gin.Engine) {
 	admin.Use(middleware.AdminOnly())
 	admin.GET("/users", userController.GetAllUsers)
 	admin.DELETE("/users/:id", userController.DeleteUser)
+	// Health Check
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "ok"})
+	})
 }

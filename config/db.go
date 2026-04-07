@@ -3,36 +3,43 @@ package config
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-
-	"go-auth-app/models"
 )
 
 var DB *gorm.DB
 
 func ConnectDB() {
+	var database *gorm.DB
+	var err error
 
 	dsn := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=%s",
-		GetEnv("DB_HOST", "localhost"),
+		GetEnv("DB_HOST", "db"), // ⬅️ default ganti
 		GetEnv("DB_USER", "postgres"),
-		GetEnv("DB_PASSWORD", "postgres"),
-		GetEnv("DB_NAME", "go_auth"),
+		GetEnv("DB_PASSWORD", "password"),
+		GetEnv("DB_NAME", "auth_db"),
 		GetEnv("DB_PORT", "5432"),
 		GetEnv("DB_SSLMODE", "disable"),
 	)
 
-	database, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	// retry mechanism
+	for i := 0; i < 10; i++ {
+		database, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+		if err == nil {
+			log.Println("✅ Database connected")
+			break
+		}
 
-	if err != nil {
-		log.Fatalf("DB connection failed: %v", err)
+		log.Println("⏳ Waiting for database...", err)
+		time.Sleep(2 * time.Second)
 	}
 
-	log.Println("Database connected")
-
-	database.AutoMigrate(&models.User{})
+	if err != nil {
+		log.Fatalf("❌ DB connection failed after retries: %v", err)
+	}
 
 	DB = database
 }

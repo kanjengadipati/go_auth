@@ -1,4 +1,12 @@
-DB_URL := postgres://meilanasapta:postgres@localhost:5432/go_auth?sslmode=disable
+include .env
+
+DB_HOST ?= $(DB_HOST)
+DB_PORT ?= $(DB_PORT)
+DB_USER ?= $(DB_USER)
+DB_PASSWORD ?= $(DB_PASSWORD)
+DB_NAME ?= $(DB_NAME)
+
+DB_URL := postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable
 
 .PHONY: migrate-up migrate-down migrate-down-all migrate-status migrate-force migrate-create migrate-drop seed db-setup
 
