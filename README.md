@@ -36,6 +36,8 @@ make docker-up
 ### Test
 
 ```bash
+make test
+# or
 go test ./...
 ```
 
@@ -512,6 +514,7 @@ docker-compose --env-file .env.docker up --build
 ### Or use the Makefile shortcuts
 
 ```bash
+make help
 make docker-up
 make docker-down
 make docker-logs
@@ -547,14 +550,18 @@ make db-setup
 Useful Makefile commands:
 
 ```bash
+make help
 make migrate-up
 make migrate-down
 make migrate-status
 make migrate-create NAME=create_example_table
 make seed
+make test
+make fmt
 ```
 
 `make migrate-*` uses `DATABASE_URL` when it is present.
+`make docker-*` uses `DOCKER_ENV_FILE=.env.docker` by default.
 
 ## Deployment Notes
 
@@ -576,13 +583,17 @@ go build -tags netgo -ldflags '-s -w' -o app .
 ## Makefile Shortcuts
 
 ```bash
+make help
+make fmt
+make test
+make check
 make migrate-up
 make migrate-down
 make migrate-down-all
 make migrate-status
 make migrate-create NAME=create_example_table
 make migrate-force VERSION=1
-make migrate-drop
+make migrate-drop CONFIRM=1
 make seed
 make db-setup
 make docker-up
@@ -596,6 +607,8 @@ make docker-rebuild
 ### Automated tests
 
 ```bash
+make test
+# or
 go test ./...
 ```
 
