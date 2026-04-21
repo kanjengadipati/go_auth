@@ -55,6 +55,7 @@ This project provides:
 - audit trail for important auth and user actions
 - permission-based authorization for admin actions
 - basic auth endpoint rate limiting and security headers
+- request-scoped structured logging with request ID propagation
 - database migration and seeding
 - local Docker workflow
 - generic PostgreSQL-based deployment support
@@ -817,6 +818,7 @@ make db-setup
 - Sensitive auth endpoints include basic in-memory rate limiting to reduce brute-force and spam attempts.
 - The app sets lightweight security headers such as `X-Content-Type-Options` and `X-Frame-Options`.
 - Request IDs are propagated through the app via the `X-Request-ID` header.
+- The app emits lightweight structured JSON request logs so request tracing is easier across the gateway and backend.
 - Trusted proxy handling is configurable through `TRUSTED_PROXIES` so client IP-based audit and rate limiting work more safely behind a gateway.
 
 ## Roadmap Ideas
