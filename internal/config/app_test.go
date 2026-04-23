@@ -88,7 +88,7 @@ func TestAppConfigValidateRejectsUnsupportedAIProvider(t *testing.T) {
 		t.Fatal("expected validation error, got nil")
 	}
 
-	assertContains(t, err.Error(), "AI_PROVIDER must be one of: mock, ollama")
+	assertContains(t, err.Error(), "AI_PROVIDER must be one of: mock, ollama, openai, gemini")
 }
 
 func TestAppConfigValidateRejectsInvalidAITimeout(t *testing.T) {
@@ -109,6 +109,39 @@ func TestAppConfigValidateRejectsInvalidAITimeout(t *testing.T) {
 	}
 
 	assertContains(t, err.Error(), "AI_TIMEOUT_SECONDS must be greater than 0 when AI is enabled")
+}
+
+func TestAppConfigValidateRequiresAPIKeyForOpenAIAndGemini(t *testing.T) {
+	testCases := []struct {
+		name     string
+		provider string
+	}{
+		{name: "openai", provider: "openai"},
+		{name: "gemini", provider: "gemini"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := AppConfig{
+				Port:        "8080",
+				DatabaseURL: "postgresql://postgres:password@localhost:5432/auth_db?sslmode=disable",
+				JWTSecret:   []byte("super-secret-key"),
+				AI: AIConfig{
+					Enabled:        true,
+					Provider:       tc.provider,
+					Model:          "test-model",
+					TimeoutSeconds: 30,
+				},
+			}
+
+			err := cfg.Validate()
+			if err == nil {
+				t.Fatal("expected validation error, got nil")
+			}
+
+			assertContains(t, err.Error(), "AI_API_KEY is required when AI_PROVIDER is "+tc.provider)
+		})
+	}
 }
 
 func assertContains(t *testing.T, actual, expected string) {
