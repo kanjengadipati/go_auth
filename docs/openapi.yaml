@@ -11,6 +11,8 @@ info:
 servers:
   - url: http://localhost:8080
     description: Local development
+  - url: https://go-api-starterkit.onrender.com
+    description: Production
 tags:
   - name: Health
   - name: Auth

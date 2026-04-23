@@ -227,7 +227,8 @@ func TestAuditInvestigatorService_WithMockProvider(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Len(t, logs, 1)
-	assert.Contains(t, result.Summary, "AI mock analysis completed")
+	assert.Contains(t, result.Summary, "Mock investigation reviewed")
+	assert.Contains(t, result.Summary, "resource auth")
 	assert.NotEmpty(t, result.Timeline)
 	assert.NotEmpty(t, result.Recommendations)
 }

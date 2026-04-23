@@ -136,8 +136,8 @@ FACEBOOK_APP_SECRET=
 APPLE_CLIENT_ID=
 AI_ENABLED=false
 AI_PROVIDER=mock
-AI_MODEL=qwen2.5:3b
-AI_BASE_URL=http://localhost:11434
+AI_MODEL=mock-model
+AI_BASE_URL=
 AI_API_KEY=
 ```
 
@@ -152,7 +152,8 @@ AI_API_KEY=
 - `FACEBOOK_APP_ID` and `FACEBOOK_APP_SECRET` are required for Facebook social login.
 - `APPLE_CLIENT_ID` is required for Sign in with Apple token validation.
 - `AI_ENABLED=false` keeps the app fully usable without AI.
-- `AI_PROVIDER` currently supports `mock` and `ollama`.
+- `AI_PROVIDER` supports `mock`, `ollama`, `openai`, and `gemini`.
+- `AI_BASE_URL` is optional for hosted providers and only required when `AI_PROVIDER=ollama`.
 - `AUTO_RUN_MIGRATIONS` and `AUTO_RUN_SEEDS` are optional flags for startup-time initialization (keep `false` for local and Docker).
 
 ---
@@ -195,6 +196,26 @@ AI_ENABLED=true
 AI_PROVIDER=ollama
 AI_MODEL=qwen2.5:3b
 AI_BASE_URL=http://localhost:11434
+AI_TIMEOUT_SECONDS=30
+```
+
+For OpenAI-hosted AI:
+
+```env
+AI_ENABLED=true
+AI_PROVIDER=openai
+AI_MODEL=gpt-4.1-mini
+AI_API_KEY=your_openai_api_key
+AI_TIMEOUT_SECONDS=30
+```
+
+For Gemini free-tier style demos:
+
+```env
+AI_ENABLED=true
+AI_PROVIDER=gemini
+AI_MODEL=gemini-2.5-flash
+AI_API_KEY=your_gemini_api_key
 AI_TIMEOUT_SECONDS=30
 ```
 
@@ -264,6 +285,8 @@ POST /auth/admin/audit-logs/investigate
 | `ai investigator is not enabled` | `AI_ENABLED` is still false | Set `AI_ENABLED=true` and restart |
 | `ollama is unavailable` | Ollama is not running | Run `ollama serve` |
 | `ollama model is not available` | Model not pulled | Run `ollama pull <model>` |
+| `openai error: bad api key` | Invalid or missing OpenAI API key | Set `AI_API_KEY` to a valid OpenAI key |
+| `gemini error: unsupported model` | Wrong Gemini model name or unavailable model | Use a supported Gemini model such as `gemini-2.5-flash` |
 | `ai investigation timed out` | Model too slow | Increase `AI_TIMEOUT_SECONDS` or use a smaller model |
 
 ---

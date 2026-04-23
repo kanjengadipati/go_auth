@@ -9,7 +9,6 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 )
@@ -39,7 +38,7 @@ var (
 
 func NewOllamaProvider(baseURL string, timeout time.Duration) *OllamaProvider {
 	return &OllamaProvider{
-		baseURL: normalizeBaseURL(baseURL),
+		baseURL: normalizeBaseURL(baseURL, ""),
 		client:  &http.Client{Timeout: timeout},
 	}
 }
@@ -125,15 +124,4 @@ func fallbackOllamaError(message string, status int) string {
 		return message
 	}
 	return fmt.Sprintf("status %d", status)
-}
-
-func normalizeBaseURL(raw string) string {
-	if strings.TrimSpace(raw) == "" {
-		return ""
-	}
-	parsed, err := url.Parse(raw)
-	if err != nil {
-		return strings.TrimRight(raw, "/")
-	}
-	return strings.TrimRight(parsed.String(), "/")
 }

@@ -69,7 +69,7 @@ func LoadAppConfig() AppConfig {
 			Enabled:        envBool("AI_ENABLED"),
 			Provider:       strings.ToLower(GetEnv("AI_PROVIDER", "mock")),
 			Model:          GetEnv("AI_MODEL", "qwen2.5:3b"),
-			BaseURL:        GetEnv("AI_BASE_URL", "http://localhost:11434"),
+			BaseURL:        GetEnv("AI_BASE_URL", ""),
 			APIKey:         GetEnv("AI_API_KEY", ""),
 			TimeoutSeconds: envInt("AI_TIMEOUT_SECONDS", 30),
 		},
@@ -122,8 +122,22 @@ func (c AppConfig) Validate() error {
 			if c.AI.Model == "" {
 				problems = append(problems, "AI_MODEL is required when AI_PROVIDER is ollama")
 			}
+		case "openai":
+			if c.AI.APIKey == "" {
+				problems = append(problems, "AI_API_KEY is required when AI_PROVIDER is openai")
+			}
+			if c.AI.Model == "" {
+				problems = append(problems, "AI_MODEL is required when AI_PROVIDER is openai")
+			}
+		case "gemini":
+			if c.AI.APIKey == "" {
+				problems = append(problems, "AI_API_KEY is required when AI_PROVIDER is gemini")
+			}
+			if c.AI.Model == "" {
+				problems = append(problems, "AI_MODEL is required when AI_PROVIDER is gemini")
+			}
 		default:
-			problems = append(problems, "AI_PROVIDER must be one of: mock, ollama")
+			problems = append(problems, "AI_PROVIDER must be one of: mock, ollama, openai, gemini")
 		}
 	}
 
