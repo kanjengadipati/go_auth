@@ -159,7 +159,28 @@ AUTO_RUN_SEEDS=false
 
 unless you intentionally want startup-time initialization.
 
-### AI Audit Investigator
+### AI Audit Logs
+
+This project includes an optional AI-powered audit log workflow for admin users. It can:
+
+- filter and inspect audit logs from admin endpoints
+- export matching audit logs as CSV
+- investigate a selected log window with AI
+- save the generated investigation result for later review
+
+The AI investigation output is structured into:
+
+- `summary`
+- `timeline`
+- `suspicious_signals`
+- `recommendations`
+
+Required admin permissions:
+
+- `audit.read` for listing logs, exporting logs, and reading saved investigations
+- `audit.investigate` for creating a new AI investigation
+
+### AI Audit Investigator Setup
 
 For quick local testing without a real model:
 
@@ -189,6 +210,51 @@ Common failures:
 - `ai investigator is not enabled`: `AI_ENABLED` is still false or the app was not restarted.
 - `ollama is unavailable`: Ollama is not running or `AI_BASE_URL` is wrong.
 - `ollama model is not available`: run `ollama pull <model>` first.
+
+### AI Audit Logs Flow
+
+Typical admin flow:
+
+1. Query audit logs with `GET /auth/admin/audit-logs`
+2. Narrow the result with filters such as `resource`, `status`, `actor_user_id`, `search`, `date_from`, and `date_to`
+3. Send the same filter scope to `POST /auth/admin/audit-logs/investigate`
+4. Review the generated summary and recommendations
+5. Re-open saved investigation history from `GET /auth/admin/audit-logs/investigations`
+
+The `POST /auth/admin/audit-logs/investigate` request accepts:
+
+```json
+{
+  "action": "login",
+  "resource": "auth",
+  "status": "failed",
+  "actor_user_id": 1,
+  "search": "invalid credentials",
+  "date_from": "2026-04-20T00:00:00Z",
+  "date_to": "2026-04-21T00:00:00Z",
+  "limit": 50
+}
+```
+
+The AI response is saved and returned as structured investigation data, for example:
+
+```json
+{
+  "summary": "Multiple failed login attempts were clustered in a short time window.",
+  "timeline": [
+    "2026-04-20T08:00:00Z failed login attempt from 10.0.0.10",
+    "2026-04-20T08:03:00Z repeated failure from the same IP"
+  ],
+  "suspicious_signals": [
+    "high number of failed auth events from one IP",
+    "repeated attempts against the same resource"
+  ],
+  "recommendations": [
+    "review the source IP",
+    "consider temporary blocking or tighter rate limiting"
+  ]
+}
+```
 
 ## Local Development
 
@@ -905,6 +971,7 @@ The codebase has gone through:
 - auth hardening
 - bootstrap/config standardization
 - audit trail foundation for auth and user management
+- optional AI audit log investigation and saved investigation history
 - local and Docker development preparation
 - Postman manual testing setup
 
