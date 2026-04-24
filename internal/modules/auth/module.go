@@ -16,8 +16,8 @@ type Module struct {
 }
 
 func BuildModule(db *gorm.DB, cfg config.AppConfig, userService *userModule.Service, jwtService *services.JWTService, auditService *audit.Service, permissionService *permission.Service) *Module {
-	service := NewService(db, cfg, userService, jwtService, auditService, permissionService)
-	handler := NewHandler(service)
+	service := NewService(db, cfg, userService, jwtService, auditService)
+	handler := NewHandler(service, permissionService)
 
 	return &Module{
 		Service: service,

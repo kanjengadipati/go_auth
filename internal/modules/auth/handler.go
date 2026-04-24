@@ -7,15 +7,17 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"go-api-starterkit/internal/modules/permission"
 	"go-api-starterkit/internal/services"
 )
 
 type AuthHandler struct {
-	AuthService AuthService
+	AuthService   AuthService
+	PermissionSvc *permission.Service
 }
 
-func NewHandler(authService AuthService) *AuthHandler {
-	return &AuthHandler{AuthService: authService}
+func NewHandler(authService AuthService, permissionSvc *permission.Service) *AuthHandler {
+	return &AuthHandler{AuthService: authService, PermissionSvc: permissionSvc}
 }
 
 func (h *AuthHandler) Register(c *gin.Context) {
@@ -202,7 +204,7 @@ func (h *AuthHandler) Profile(c *gin.Context) {
 		return
 	}
 
-	permissions, _ := h.AuthService.GetPermissions(user.RoleID)
+	permissions, _ := h.PermissionSvc.Repo.ListRolePermissions(user.RoleID)
 
 	utils.Success(c, http.StatusOK, "Profile fetched", gin.H{
 		"id":          user.ID,
