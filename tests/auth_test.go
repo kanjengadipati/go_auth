@@ -26,6 +26,7 @@ import (
 type stubRefreshTokenRepo struct {
 	findByID            func(id uint) (*token.RefreshToken, error)
 	findByUserAndDevice func(userID uint, deviceID string) (*token.RefreshToken, error)
+	findByTokenHash     func(tokenHash string) (*token.RefreshToken, error)
 	findByUser          func(userID uint) ([]token.RefreshToken, error)
 	deleteByID          func(id uint) error
 	deleteByUserAndID   func(userID, id uint) error
@@ -49,6 +50,13 @@ func (s *stubRefreshTokenRepo) FindByUserAndDevice(userID uint, deviceID string)
 		return s.findByUserAndDevice(userID, deviceID)
 	}
 	return nil, nil
+}
+
+func (s *stubRefreshTokenRepo) FindByTokenHash(tokenHash string) (*token.RefreshToken, error) {
+	if s.findByTokenHash != nil {
+		return s.findByTokenHash(tokenHash)
+	}
+	return nil, gorm.ErrRecordNotFound
 }
 
 func (s *stubRefreshTokenRepo) FindByUser(userID uint) ([]token.RefreshToken, error) {
@@ -173,9 +181,9 @@ func TestRegister_Success(t *testing.T) {
 	mockService := new(mocks.AuthService)
 	handler := auth.AuthHandler{AuthService: mockService}
 
-	body := `{"name":"test","email":"test@mail.com","password":"123456"}`
+	body := `{"name":"test","email":"test@mail.com","password":"12345678"}`
 
-	mockService.On("Register", mock.Anything, "123456").Return(nil)
+	mockService.On("Register", mock.Anything, "12345678").Return(nil)
 
 	c, w := setupTest()
 	req := httptest.NewRequest(http.MethodPost, "/register", strings.NewReader(body))
@@ -402,7 +410,7 @@ func TestAuthService_Register_IgnoresEmailDeliveryFailure(t *testing.T) {
 	err := service.Register(&user.User{
 		Name:  "Test",
 		Email: "test@mail.com",
-	}, "123456")
+	}, "12345678")
 
 	assert.NoError(t, err)
 	assert.Equal(t, 1, createdUser)
@@ -783,6 +791,25 @@ func TestSecurityHeadersMiddleware_SetsExpectedHeaders(t *testing.T) {
 	assert.Equal(t, "DENY", resp.Header().Get("X-Frame-Options"))
 	assert.Equal(t, "no-referrer", resp.Header().Get("Referrer-Policy"))
 	assert.Equal(t, "none", resp.Header().Get("X-Permitted-Cross-Domain-Policies"))
+	assert.Equal(t, "default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'", resp.Header().Get("Content-Security-Policy"))
+	assert.Empty(t, resp.Header().Get("Strict-Transport-Security"))
+}
+
+func TestSecurityHeadersMiddleware_SetsHSTSForHTTPSRequests(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+	router.Use(middleware.SecurityHeaders())
+	router.GET("/health", func(c *gin.Context) {
+		c.Status(http.StatusOK)
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	req.Header.Set("X-Forwarded-Proto", "https")
+	resp := httptest.NewRecorder()
+
+	router.ServeHTTP(resp, req)
+
+	assert.Equal(t, "max-age=31536000; includeSubDomains", resp.Header().Get("Strict-Transport-Security"))
 }
 
 func TestRequestIDMiddleware_UsesIncomingHeader(t *testing.T) {

@@ -1,11 +1,13 @@
 package auth
 
 import (
+	"errors"
 	"go-api-starterkit/internal/utils"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"go-api-starterkit/internal/services"
 )
 
 type AuthHandler struct {
@@ -27,6 +29,10 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	user := utils.DtoToUser(input.Name, input.Email)
 	err := h.AuthService.Register(&user, input.Password)
 	if err != nil {
+		if errors.Is(err, services.ErrWeakPassword) {
+			utils.Error(c, http.StatusBadRequest, err.Error())
+			return
+		}
 		utils.Error(c, http.StatusInternalServerError, "Failed to create user")
 		return
 	}
@@ -172,7 +178,7 @@ func (h *AuthHandler) RevokeSession(c *gin.Context) {
 	ipAddress := c.ClientIP()
 
 	if err := h.AuthService.RevokeSession(userID, uint(sessionID), userAgent, ipAddress); err != nil {
-		if err.Error() == "session not found" {
+		if errors.Is(err, ErrSessionNotFound) {
 			utils.Error(c, http.StatusNotFound, err.Error())
 			return
 		}

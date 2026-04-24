@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"go-api-starterkit/internal/modules/audit"
+	"go-api-starterkit/internal/services"
 
-	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -72,12 +72,12 @@ func (s *authService) ResetPassword(tokenString string, newPassword string) erro
 		return errors.New("token already invalid")
 	}
 
-	hashed, err := bcrypt.GenerateFromPassword([]byte(newPassword), 14)
+	hashed, err := services.HashPassword(newPassword)
 	if err != nil {
 		return errors.New("failed to update password")
 	}
 
-	user.Password = string(hashed)
+	user.Password = hashed
 	user.PasswordUpdatedAt = time.Now()
 
 	if err := s.UserRepo.Update(user); err != nil {

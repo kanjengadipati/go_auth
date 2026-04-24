@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"go-api-starterkit/internal/modules/audit"
+	"go-api-starterkit/internal/services"
 
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -39,7 +40,7 @@ func (s *Service) CreateUser(input CreateUserRequest) (*User, error) {
 		role = "user"
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), 14)
+	hashedPassword, err := services.HashPassword(input.Password)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +48,7 @@ func (s *Service) CreateUser(input CreateUserRequest) (*User, error) {
 	user := &User{
 		Name:       input.Name,
 		Email:      input.Email,
-		Password:   string(hashedPassword),
+		Password:   hashedPassword,
 		Role:       role,
 		IsVerified: input.IsVerified,
 	}
@@ -107,12 +108,12 @@ func (s *Service) ChangePassword(id uint, currentPassword, newPassword string) e
 		return errors.New("current password is incorrect")
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), 14)
+	hashedPassword, err := services.HashPassword(newPassword)
 	if err != nil {
 		return err
 	}
 
-	user.Password = string(hashedPassword)
+	user.Password = hashedPassword
 	user.PasswordUpdatedAt = time.Now()
 
 	return s.UserRepo.Update(user)

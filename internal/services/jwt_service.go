@@ -48,13 +48,6 @@ func (j *JWTService) ValidateToken(tokenString string) (jwt.MapClaims, error) {
 		return nil, errors.New("invalid claims")
 	}
 
-	// check for exp manually if needed
-	if exp, ok := claims["exp"].(float64); ok {
-		if int64(exp) < time.Now().Unix() {
-			return nil, errors.New("token expired")
-		}
-	}
-
 	return claims, nil
 }
 

@@ -110,12 +110,12 @@ func (s *authService) RevokeSession(userID, sessionID uint, userAgent, ipAddress
 	session, err := s.RefreshTokenRepo.FindByID(sessionID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return errors.New("session not found")
+			return ErrSessionNotFound
 		}
 		return err
 	}
 	if session.UserID != userID {
-		return errors.New("session not found")
+		return ErrSessionNotFound
 	}
 
 	if err := s.RefreshTokenRepo.DeleteByUserAndID(userID, sessionID); err != nil {
@@ -139,39 +139,33 @@ func (s *authService) RevokeSession(userID, sessionID uint, userAgent, ipAddress
 func (s *authService) RefreshToken(oldRefreshToken string) (*AuthTokens, error) {
 	claims, err := s.JWT.ValidateToken(oldRefreshToken)
 	if err != nil {
-		return nil, errors.New("invalid refresh token")
+		return nil, ErrInvalidRefreshToken
 	}
 
 	if claims["type"] != TokenRefresh {
-		return nil, errors.New("invalid token type")
+		return nil, ErrInvalidTokenType
 	}
 
 	userID, ok := claims["user_id"].(float64)
 	if !ok {
-		return nil, errors.New("invalid user id in token claims")
+		return nil, ErrInvalidTokenClaims
 	}
 	uid := uint(userID)
 
-	tokens, err := s.RefreshTokenRepo.FindByUser(uid)
+	oldHash := utils.HashToken(oldRefreshToken)
+	matchedToken, err := s.RefreshTokenRepo.FindByTokenHash(oldHash)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrInvalidRefreshToken
+		}
 		return nil, err
 	}
-	oldHash := utils.HashToken(oldRefreshToken)
-
-	var matchedIndex = -1
-	for i := range tokens {
-		if tokens[i].TokenHash == oldHash {
-			matchedIndex = i
-			break
-		}
-	}
-	if matchedIndex == -1 {
-		return nil, errors.New("invalid refresh token")
+	if matchedToken.UserID != uid {
+		return nil, ErrInvalidRefreshToken
 	}
 
-	matchedToken := tokens[matchedIndex]
 	if time.Now().After(matchedToken.ExpiredAt) {
-		return nil, errors.New("refresh token expired")
+		return nil, ErrRefreshTokenExpired
 	}
 
 	if err := s.RefreshTokenRepo.DeleteByID(matchedToken.ID); err != nil {

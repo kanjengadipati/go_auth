@@ -6,9 +6,9 @@ import (
 	permissionModule "go-api-starterkit/internal/modules/permission"
 	roleModule "go-api-starterkit/internal/modules/role"
 	userModule "go-api-starterkit/internal/modules/user"
+	"go-api-starterkit/internal/services"
 	"log"
 
-	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -134,7 +134,7 @@ func SeedAdmin(db *gorm.DB, cfg config.AppConfig) {
 		return
 	}
 	if user.ID == 0 {
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+		hashedPassword, err := services.HashPassword(password)
 		if err != nil {
 			log.Printf("Error hashing admin password: %v", err)
 			return
@@ -143,7 +143,7 @@ func SeedAdmin(db *gorm.DB, cfg config.AppConfig) {
 		admin := userModule.User{
 			Name:       "Super Admin",
 			Email:      email,
-			Password:   string(hashedPassword),
+			Password:   hashedPassword,
 			RoleID:     superadminRole.ID,
 			Role:       superadminRole.Name,
 			IsVerified: true,

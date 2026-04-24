@@ -29,7 +29,7 @@ This project provides a complete authentication and authorization foundation bui
 - Audit trail for important auth and user actions
 - Optional AI-powered audit log investigator (mock or Ollama)
 - Permission-based authorization for admin actions
-- Basic rate limiting and security headers
+- Basic rate limiting with a swappable store abstraction and hardened security headers
 - Request-scoped structured logging with request ID propagation
 - Database migration and seeding
 - Local Docker workflow with Nginx, PostgreSQL, and Redis
@@ -109,6 +109,8 @@ go test ./...
 
 Each module owns its own handler, service, repository, and model — keeping domain logic isolated and easy to navigate.
 
+Container builds use `./cmd/api` as the primary API entrypoint. The repository-root `main.go` remains as a compatibility entrypoint for simple local builds.
+
 ---
 
 ## Environment Configuration
@@ -151,6 +153,7 @@ AI_API_KEY=
 - `GOOGLE_CLIENT_ID` is optional but recommended so Google token validation checks the audience claim.
 - `FACEBOOK_APP_ID` and `FACEBOOK_APP_SECRET` are required for Facebook social login.
 - `APPLE_CLIENT_ID` is required for Sign in with Apple token validation.
+- Facebook and Apple social login are implemented, but production-hardening steps such as `appsecret_proof` for Facebook and stronger nonce handling for Apple should still be considered before public internet exposure.
 - `AI_ENABLED=false` keeps the app fully usable without AI.
 - `AI_PROVIDER` supports `mock`, `ollama`, `openai`, and `gemini`.
 - `AI_BASE_URL` is optional for hosted providers and only required when `AI_PROVIDER=ollama`.
@@ -484,8 +487,8 @@ go build -tags netgo -ldflags '-s -w' -o app .
 - Use secret managers or platform-managed env vars for production deployments
 - Rotate any third-party credentials that were ever exposed locally or in git history
 - Use separate credentials for local, staging, and production environments
-- Sensitive auth endpoints include in-memory rate limiting to reduce brute-force attempts
-- The app sets lightweight security headers: `X-Content-Type-Options`, `X-Frame-Options`
+- Sensitive auth endpoints include a swappable rate-limit store; the default in-memory store is suitable for a single instance, while multi-instance deployments should replace it with a shared backend such as Redis.
+- The app sets baseline security headers including CSP, HSTS on HTTPS requests, `X-Content-Type-Options`, and `X-Frame-Options`
 - Request IDs are propagated via the `X-Request-ID` header
 - Trusted proxy handling is configurable through `TRUSTED_PROXIES`
 

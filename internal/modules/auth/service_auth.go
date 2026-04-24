@@ -1,13 +1,13 @@
 package auth
 
 import (
-	"errors"
 	"log"
 	"time"
 
 	"go-api-starterkit/internal/modules/audit"
 	tokenModule "go-api-starterkit/internal/modules/token"
 	userModule "go-api-starterkit/internal/modules/user"
+	"go-api-starterkit/internal/services"
 	"go-api-starterkit/internal/utils"
 
 	"github.com/google/uuid"
@@ -16,12 +16,12 @@ import (
 )
 
 func (s *authService) Register(user *userModule.User, password string) error {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	hashedPassword, err := services.HashPassword(password)
 	if err != nil {
 		return err
 	}
 
-	user.Password = string(hashedPassword)
+	user.Password = hashedPassword
 	user.Role = "user"
 	user.IsVerified = false
 
@@ -87,7 +87,7 @@ func (s *authService) Login(email, password, deviceID, userAgent, ipAddress stri
 			IPAddress:   ipAddress,
 			UserAgent:   userAgent,
 		})
-		return nil, errors.New("invalid credentials")
+		return nil, ErrInvalidCredentials
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
@@ -101,7 +101,7 @@ func (s *authService) Login(email, password, deviceID, userAgent, ipAddress stri
 			IPAddress:   ipAddress,
 			UserAgent:   userAgent,
 		})
-		return nil, errors.New("invalid credentials")
+		return nil, ErrInvalidCredentials
 	}
 
 	if !user.IsVerified {
@@ -115,7 +115,7 @@ func (s *authService) Login(email, password, deviceID, userAgent, ipAddress stri
 			IPAddress:   ipAddress,
 			UserAgent:   userAgent,
 		})
-		return nil, errors.New("please verify your email first")
+		return nil, ErrEmailNotVerified
 	}
 
 	tokens, err := s.issueTokens(user.ID, user.Role, deviceID, userAgent, ipAddress)

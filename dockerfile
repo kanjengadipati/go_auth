@@ -5,7 +5,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN go build -o app .
+RUN go build -o app ./cmd/api
 
 # final image
 FROM alpine:latest

@@ -6,6 +6,7 @@ type RefreshTokenRepository interface {
 	Save(token *RefreshToken) error
 	FindByID(id uint) (*RefreshToken, error)
 	FindByUserAndDevice(userID uint, deviceID string) (*RefreshToken, error)
+	FindByTokenHash(tokenHash string) (*RefreshToken, error)
 	FindByUser(userID uint) ([]RefreshToken, error)
 	DeleteByID(id uint) error
 	DeleteByUserAndID(userID, id uint) error
@@ -39,6 +40,15 @@ func (r *GormRefreshTokenRepository) FindByID(id uint) (*RefreshToken, error) {
 func (r *GormRefreshTokenRepository) FindByUserAndDevice(userID uint, deviceID string) (*RefreshToken, error) {
 	var token RefreshToken
 	if err := r.db.Where("user_id = ? AND device_id = ?", userID, deviceID).First(&token).Error; err != nil {
+		return nil, err
+	}
+
+	return &token, nil
+}
+
+func (r *GormRefreshTokenRepository) FindByTokenHash(tokenHash string) (*RefreshToken, error) {
+	var token RefreshToken
+	if err := r.db.Where("token_hash = ?", tokenHash).First(&token).Error; err != nil {
 		return nil, err
 	}
 
