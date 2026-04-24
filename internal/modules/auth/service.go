@@ -3,7 +3,6 @@ package auth
 import (
 	"go-api-starterkit/internal/config"
 	"go-api-starterkit/internal/modules/audit"
-	"go-api-starterkit/internal/modules/permission"
 	permissionless "go-api-starterkit/internal/modules/social"
 	tokenModule "go-api-starterkit/internal/modules/token"
 	userModule "go-api-starterkit/internal/modules/user"

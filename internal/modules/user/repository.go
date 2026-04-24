@@ -59,9 +59,7 @@ func (r *GormRepository) FindAllWithFilter(page, limit int, search, role string)
 	}
 
 	if role != "" {
-		query = query.Where("role = ? AND role != ?", role, "admin")
-	} else {
-		query = query.Where("role != ?", "admin")
+		query = query.Where("role = ?", role)
 	}
 
 	query.Count(&total)
