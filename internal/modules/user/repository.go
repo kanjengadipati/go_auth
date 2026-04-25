@@ -30,17 +30,35 @@ func (r *GormRepository) Create(user *User) error {
 func (r *GormRepository) FindByEmail(email string) (*User, error) {
 	var user User
 	err := r.db.Where("email = ?", email).First(&user).Error
+	if err != nil {
+		return nil, err
+	}
 	return &user, err
 }
 
 func (r *GormRepository) FindByID(id uint) (*User, error) {
 	var user User
 	err := r.db.First(&user, id).Error
+	if err != nil {
+		return nil, err
+	}
 	return &user, err
 }
 
 func (r *GormRepository) Update(user *User) error {
-	return r.db.Save(user).Error
+	updates := map[string]interface{}{
+		"name":                 user.Name,
+		"email":                user.Email,
+		"role":                 user.Role,
+		"role_id":              user.RoleID,
+		"is_verified":          user.IsVerified,
+		"password_updated_at":  user.PasswordUpdatedAt,
+		"access_token_version": user.AccessTokenVersion,
+	}
+	if user.Password != "" {
+		updates["password"] = user.Password
+	}
+	return r.db.Model(user).Updates(updates).Error
 }
 
 func (r *GormRepository) FindAll() ([]User, error) {

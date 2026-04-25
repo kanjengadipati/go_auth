@@ -296,7 +296,7 @@ func (h *AuthHandler) SocialLogin(c *gin.Context) {
 		return
 	}
 
-	deviceID := "web"
+	deviceID := c.GetHeader("X-Device-ID")
 	userAgent := c.GetHeader("User-Agent")
 	ip := c.ClientIP()
 

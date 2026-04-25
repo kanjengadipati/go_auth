@@ -309,7 +309,7 @@ POST /auth/admin/audit-logs/investigate
 | POST | `/auth/login` | Login and receive tokens |
 | POST | `/auth/refresh` | Refresh access token |
 | GET | `/auth/verify` | Verify email address |
-| GET | `/auth/resend-verification` | Resend verification email |
+| POST | `/auth/resend-verification` | Resend verification email |
 | POST | `/auth/forgot-password` | Request password reset |
 | POST | `/auth/reset-password` | Reset password with token |
 | POST | `/auth/social-login` | Login via Google, Facebook, or Apple |
@@ -533,7 +533,9 @@ curl -X GET "$BASE_URL/auth/verify?token=<verify-token>"
 ### Resend Verification
 
 ```bash
-curl -X GET "$BASE_URL/auth/resend-verification?email=tester@example.com"
+curl -X POST "$BASE_URL/auth/resend-verification" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "tester@example.com"}'
 ```
 
 ### Forgot Password
@@ -567,6 +569,7 @@ Supported providers: `google`, `facebook`, `apple`.
 ```bash
 curl -X POST "$BASE_URL/auth/social-login" \
   -H "Content-Type: application/json" \
+  -H "X-Device-ID: web" \
   -d '{
     "provider": "google",
     "token": "<provider-token>"
@@ -922,7 +925,7 @@ make db-setup
 
 The user was registered but the verification email was not clicked. Either:
 - Check your inbox and click the link
-- Resend with `GET /auth/resend-verification?email=<email>`
+- Resend with `POST /auth/resend-verification` and a JSON email body
 - Or set `is_verified = true` directly in the database for development
 
 **`ai investigator is not enabled` on `/auth/admin/audit-logs/investigate`**

@@ -23,7 +23,7 @@ func SetupRoutes(api *gin.RouterGroup, handler *AuthHandler, jwtService *service
 	auth.POST("/login", loginLimiter.Middleware(), handler.Login)
 	auth.POST("/refresh", refreshLimiter.Middleware(), handler.RefreshToken)
 	auth.GET("/verify", handler.VerifyEmail)
-	auth.GET("/resend-verification", passwordLimiter.Middleware(), handler.ResendVerification)
+	auth.POST("/resend-verification", passwordLimiter.Middleware(), handler.ResendVerification)
 	auth.POST("/forgot-password", passwordLimiter.Middleware(), handler.ForgotPassword)
 	auth.POST("/reset-password", passwordLimiter.Middleware(), handler.ResetPassword)
 	auth.POST("/social-login", socialLimiter.Middleware(), handler.SocialLogin)

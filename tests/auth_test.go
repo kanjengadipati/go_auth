@@ -710,7 +710,7 @@ func TestSocialLogin_Success(t *testing.T) {
 		"SocialLogin",
 		"google",
 		mock.Anything,
-		mock.Anything,
+		"browser1",
 		mock.Anything,
 		mock.Anything,
 	).Return(&auth.AuthTokens{
@@ -721,6 +721,7 @@ func TestSocialLogin_Success(t *testing.T) {
 	c, w := setupTest()
 	req := httptest.NewRequest(http.MethodPost, "/social-login", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Device-ID", "browser1")
 	c.Request = req
 
 	handler.SocialLogin(c)
@@ -739,7 +740,7 @@ func TestSocialLogin_Failure(t *testing.T) {
 		"SocialLogin",
 		"google",
 		mock.Anything,
-		mock.Anything,
+		"browser1",
 		mock.Anything,
 		mock.Anything,
 	).Return(nil, errors.New("invalid google token"))
@@ -747,6 +748,7 @@ func TestSocialLogin_Failure(t *testing.T) {
 	c, w := setupTest()
 	req := httptest.NewRequest(http.MethodPost, "/social-login", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Device-ID", "browser1")
 	c.Request = req
 
 	handler.SocialLogin(c)

@@ -70,6 +70,11 @@ func (s *authService) VerifyEmail(token string) error {
 		return err
 	}
 
+	if user.IsVerified {
+		_ = s.EmailVerificationRepo.DeleteByID(verification.ID)
+		return nil
+	}
+
 	user.IsVerified = true
 	if err := s.UserRepo.Update(user); err != nil {
 		return err
