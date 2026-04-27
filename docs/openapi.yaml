@@ -699,7 +699,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/EnvelopeError'
 
-  /auth/admin/audit-logs/investigate:
+  /auth/admin/audit-logs/investigations:
     post:
       tags: [Audit]
       summary: Investigate filtered audit logs with AI

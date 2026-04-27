@@ -897,7 +897,7 @@
               "mode": "raw",
               "raw": "{\n  \"resource\": \"auth\",\n  \"status\": \"failed\",\n  \"limit\": 50\n}"
             },
-            "url": "{{base_url}}/auth/admin/audit-logs/investigate"
+            "url": "{{base_url}}/auth/admin/audit-logs/investigations"
           }
         },
         {
